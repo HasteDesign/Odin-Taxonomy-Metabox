@@ -5,8 +5,9 @@
  * Inherit the Odin_Metabox class to built custom Metaboxes for taxonomy terms input, changing the way user insert terms (tags and categories).
  *
  * @category Metabox
+ * @author   Haste Design
  * @author   Allyson Souza
- * @link     http://pear.php.net/package/PackageName
+ * @link     https://github.com/HasteDesign/TaxonomyMetabox
  * @version  0.0.1
  */
 
