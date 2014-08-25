@@ -77,7 +77,7 @@ Atualmente a classe oferece a possibilidade de criação de dois campos:
 	            'label'       => 'Cores',
 	            'type'        => 'tags_checkbox',
 	            'attributes'  => array('multiple' => 'multiple'),
-	            'description' => '__( 'Select the post color', 'odin' ),
+	            'description' => __( 'Select the post color', 'odin' ),
 	            'options'	    => $boxes
 	        )
 	    )
