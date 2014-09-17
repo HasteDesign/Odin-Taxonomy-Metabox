@@ -1,3 +1,5 @@
+**Bugs:** *Problemas a serem corrigidos no salvamento dos termos*
+
 Taxonomy Metabox
 ================
 
@@ -113,7 +115,7 @@ Listando todos os termos
      * armazená-los em um array, associando term->name com term->slug.
      */    
     if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
-        foreach ($veiculos as $) {
+        foreach ($veiculos as $veiculo) {
               $boxes[$veiculo->name] = $veiculo->slug;
         }
         
@@ -157,7 +159,7 @@ Listando apenas termos Pai
      * armazená-los em um array, associando term->name com term->slug.
      */    
     if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
-        foreach ($veiculos as $) {
+        foreach ($veiculos as $veiculo) {
               $boxes[$veiculo->name] = $veiculo->slug;
         }
         
