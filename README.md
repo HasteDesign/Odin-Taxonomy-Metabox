@@ -204,7 +204,7 @@ Listando apenas termos Filho
      * armazená-los em um array, associando term->name com term->slug.
      */    
     if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
-        foreach ($veiculos as $) {
+        foreach ($veiculos as $veiculo) {
               $boxes[$veiculo->name] = $veiculo->slug;
         }
         

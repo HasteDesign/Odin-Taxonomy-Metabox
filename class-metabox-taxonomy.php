@@ -242,25 +242,8 @@ class Taxonomy_Metabox extends Odin_Metabox {
 			} else {
 				$checked = '';
 			}
-
-				// Making a query to display terms even though they have not been used
-				$taxonomies = array( 
-				    $this->taxonomy,
-				);
-				
-				$args = array(
-				    'hide_empty'  => 0,
-					'slug'		  => $label //query for a current specific label as slug of term
-				);
-				
-				$terms = get_terms( $taxonomies, $args);
-				
-				// Looping trough the terms (just one term)
-				foreach($terms as $term){
-					$hexa = get_field('cor', 'Cor_'.$term->term_id);	
-				}
 			
-			echo sprintf( '<label><input type="checkbox" id="%4$s" name="%1$s[%6$s]" value="1"%2$s%3$s /><span style="background-color:%5$s; width: 30px; height: 30px; display: inline-block; vertical-align: middle; margin-bottom: 5px;"></span> %4$s </label><br/>', $id, $checked, $this->build_field_attributes( $attrs ), $key, $hexa, $label );
+			echo sprintf( '<label><input type="checkbox" id="%4$s" name="%1$s[%5$s]" value="1"%2$s%3$s />%4$s</label><br/>', $id, $checked, $this->build_field_attributes( $attrs ), $key, $label );
 		}
 	}
 }
