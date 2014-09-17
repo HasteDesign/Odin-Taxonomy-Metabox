@@ -37,9 +37,6 @@ class Taxonomy_Metabox extends Odin_Metabox {
 		$this->nonce     = $id . '_nonce';
 		$this->taxonomy  = $taxonomy;
 		
-		// Remove the default taxonomy Metabox.
-		remove_meta_box( 'tagsdiv-'.$this->taxonomy, $this->post_type, 'side' );
-		
 		// Add Metabox.
 		add_action( 'add_meta_boxes', array( &$this, 'add' ) );
 		
@@ -48,6 +45,33 @@ class Taxonomy_Metabox extends Odin_Metabox {
 
 		// Load scripts.
 		add_action( 'admin_enqueue_scripts', array( &$this, 'scripts' ) );
+	}
+    
+    /**
+	 * Add the metabox in edit screens.
+	 *
+	 * @return void
+	 */
+	public function add() {
+		foreach ( $this->get_post_type() as $post_type ) {
+			add_meta_box(
+				$this->id,
+				$this->title,
+				array( $this, 'metabox' ),
+				$post_type,
+				$this->context,
+				$this->priority
+			);
+		}
+        
+        // Remove the default taxonomy Metabox.
+        if( $this->taxonomy === 'tags' ) {
+            remove_meta_box( 'tagsdiv-'.$this->taxonomy, $this->post_type, 'side' );
+        } else if ( $this->taxonomy === 'category' ) {
+            remove_meta_box( 'categorydiv', $this->post_type, 'side' );
+        } else {
+            remove_meta_box( $this->taxonomy . 'div', $this->post_type, 'side' );
+        }
 	}
 
 	/**
@@ -178,33 +202,20 @@ class Taxonomy_Metabox extends Odin_Metabox {
 		$multiple = ( in_array( 'multiple', $attrs ) ) ? '[]' : '';
 	
 		$html = sprintf( '<select id="%1$s" name="%1$s" %2$s %3$s>', $id, $multiple, $this->build_field_attributes( $attrs ) );
-	
-		foreach ( $options as $key => $label ) {
-			if( has_term( $label , $this->taxonomy, $post_id ) ) {
-				$selected = 'selected';	
-			} else {
-				$selected = '';
-			}
+        
+        if ( !empty( $options ) ) {
+        
+            foreach ( $options as $key => $label ) {
+                if( has_term( $label , $this->taxonomy, $post_id ) ) {
+                    $selected = 'selected';	
+                } else {
+                    $selected = '';
+                }
 
-				// Making a query to display terms even though they have not been used
-				$taxonomies = array( 
-				    $this->taxonomy,
-				);
-				
-				$args = array(
-				    'hide_empty'  => 0,
-					'slug'		  => $label //query for a current specific label as slug of term
-				);
-				
-				$terms = get_terms( $taxonomies, $args);
-				
-				// Looping trough the terms (just one term)
-				foreach($terms as $term){
-					$hexa = get_field('cor', 'Cor_'.$term->term_id);	
-				}
-			
-			$html .= sprintf( '<option value="%1$s" %4$s style="background: %5$s ">%1$s</option>', $key, selected( $current, $key, false ), $label, $selected, $hexa );
-		}
+                $html .= sprintf( '<option value="%1$s" %4$s >%1$s</option>', $key, selected( $current, $key, false ), $label, $selected );
+            }
+        
+        }
 		
 		$html .= '</select>';
 		

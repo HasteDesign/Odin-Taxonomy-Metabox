@@ -44,6 +44,8 @@ Atualmente a classe oferece a possibilidade de criação de dois campos:
 
 ### Tags Checkbox ###
 
+Funciona tanto para custom taxonomies hierárquicas quanto não-hierárquicas.
+
 ```php
   $color = new Taxonomy_Metabox(
 	    'cores',  // Slug/ID do Metabox (obrigatório)
@@ -83,4 +85,143 @@ Atualmente a classe oferece a possibilidade de criação de dois campos:
 	    )
 		);
 	}
+```
+
+### Tags Select ###
+
+Funciona tanto para custom taxonomies hierárquicas quanto não-hierárquicas.
+
+Listando todos os termos
+-----------------------------------
+
+```php
+    $veiculo_metabox = new Taxonomy_Metabox(
+        'veiculo',      // Slug/ID do Metabox (obrigatório)
+        'Veículo',      // Nome do Metabox  (obrigatório)
+        'post',         // Slug do Post Type (opcional)
+        'normal',       // Contexto (opções: normal, advanced, ou side) (opcional)
+        'high',         // Prioridade (opções: high, core, default ou low) (opcional)
+        'veiculo'       // Slug da taxonomia
+    );
+
+    /* É preciso realizar uma busca por todos os termos da taxonomia
+     * para passá-los no array de options do campo.
+     */
+    $veiculos = get_terms('veiculo', array( 'hide_empty' => 0 ) );
+    
+    /* Caso exista termos registrados, iterar sobre todos os termos e
+     * armazená-los em um array, associando term->name com term->slug.
+     */    
+    if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
+        foreach ($veiculos as $) {
+              $boxes[$veiculo->name] = $veiculo->slug;
+        }
+        
+        /*
+         * Definir os campos passando o type 'tags_checkbox' e o array no options.
+         */
+        $veiculo_metabox->set_fields( 
+        array(
+            array(
+                'id'          => 'veiculo',
+                'label'       => 'Veículo',
+                'type'        => 'tags_select',
+                //'attributes'  => array('multiple' => 'multiple'), //Utilize este parâmetro caso queira que o select seja de múltipla opção 
+                'description' => 'Selecione o veículo da publicação.',
+                'options'     => $boxes
+            )
+        )
+        );
+    }
+```
+
+Listando apenas termos Pai
+-----------------------------------
+
+```php
+    $veiculo_metabox = new Taxonomy_Metabox(
+        'veiculo',      // Slug/ID do Metabox (obrigatório)
+        'Veículo',      // Nome do Metabox  (obrigatório)
+        'post',         // Slug do Post Type (opcional)
+        'normal',       // Contexto (opções: normal, advanced, ou side) (opcional)
+        'high',         // Prioridade (opções: high, core, default ou low) (opcional)
+        'veiculo'       // Slug da taxonomia
+    );
+
+    /* É preciso realizar uma busca por todos os termos da taxonomia
+     * para passá-los no array de options do campo.
+     */
+    $veiculos = get_terms('veiculo', array( 'hide_empty' => 0, 'parent' => 0) );
+    
+    /* Caso exista termos registrados, iterar sobre todos os termos e
+     * armazená-los em um array, associando term->name com term->slug.
+     */    
+    if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
+        foreach ($veiculos as $) {
+              $boxes[$veiculo->name] = $veiculo->slug;
+        }
+        
+        /*
+         * Definir os campos passando o type 'tags_checkbox' e o array no options.
+         */
+        $veiculo_metabox->set_fields( 
+        array(
+            array(
+                'id'          => 'veiculo',
+                'label'       => 'Veículo',
+                'type'        => 'tags_select',
+                //'attributes'  => array('multiple' => 'multiple'), //Utilize este parâmetro caso queira que o select seja de múltipla opção 
+                'description' => 'Selecione o veículo da publicação.',
+                'options'     => $boxes
+            )
+        )
+        );
+    }
+```
+
+Listando apenas termos Filho
+-----------------------------------
+
+```php
+    $veiculo_metabox = new Taxonomy_Metabox(
+        'veiculo',      // Slug/ID do Metabox (obrigatório)
+        'Veículo',      // Nome do Metabox  (obrigatório)
+        'post',         // Slug do Post Type (opcional)
+        'normal',       // Contexto (opções: normal, advanced, ou side) (opcional)
+        'high',         // Prioridade (opções: high, core, default ou low) (opcional)
+        'veiculo'       // Slug da taxonomia
+    );
+
+    /* É preciso realizar uma busca por todos os termos da taxonomia com o atributo parent => 0, pegando os pais, e depois iterar sobre
+     * cada um dos pais e pegar os termos filhos, armazenando-os em $veiculos, para então passá-los no array de options do campo.
+     */
+    $parent_veiculos = get_terms('veiculo', array( 'hide_empty' => 0, 'parent' => 0) );
+    foreach( $parent_veiculos as $child_veiculos ) {
+        $veiculos = get_terms('veiculo', array('parent' => $child_veiculos->term_id, 'hide_empty' => 0));
+    }
+    
+    /* Caso exista termos registrados, iterar sobre todos os termos e
+     * armazená-los em um array, associando term->name com term->slug.
+     */    
+    if( !empty( $veiculos ) && !is_wp_error( $veiculos ) ) {
+        foreach ($veiculos as $) {
+              $boxes[$veiculo->name] = $veiculo->slug;
+        }
+        
+        /*
+         * Definir os campos passando o type 'tags_checkbox' e o array no options.
+         */
+        $veiculo_metabox->set_fields( 
+        array(
+            array(
+                'id'          => 'veiculo',
+                'label'       => 'Veículo',
+                'type'        => 'tags_select',
+                //'attributes'  => array('multiple' => 'multiple'), //Utilize este parâmetro caso queira que o select seja de múltipla opção 
+                'description' => 'Selecione o veículo da publicação.',
+                'options'     => $boxes
+            )
+        )
+        );
+    }
 ```
