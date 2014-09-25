@@ -1,5 +1,3 @@
-**Bugs:** *Problemas a serem corrigidos no salvamento dos termos*
-
 Taxonomy Metabox
 ================
 
