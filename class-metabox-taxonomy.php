@@ -8,14 +8,20 @@
  * @author   Haste Design
  * @author   Allyson Souza
  * @link     https://github.com/HasteDesign/TaxonomyMetabox
- * @version  0.0.1
+ * @version  0.3
  */
 
 //Change the directory if you are not using Odin Framework, or moved your core classes to another local
 require_once get_template_directory() . '/core/classes/class-metabox.php';
- 
+
 class Taxonomy_Metabox extends Odin_Metabox {
-	
+    /**
+	 * Metaboxs fields.
+	 *
+	 * @var array
+	 */
+	protected $fields = array();
+
 	/**
 	 * Metaboxs construct.
 	 *
@@ -28,25 +34,26 @@ class Taxonomy_Metabox extends Odin_Metabox {
 	 *
 	 * @return void
 	 */
-	public function __construct( $id, $title, $post_type = 'post', $context = 'normal', $priority = 'high' , $taxonomy ) {
+	public function __construct( $id, $title, $post_type = 'post', $context = 'normal', $priority = 'high' , $taxonomy, $remove = true ){
 		$this->id        = $id;
 		$this->title     = $title;
 		$this->post_type = $post_type;
 		$this->context   = $context;
 		$this->priority  = $priority;
-		$this->nonce     = $id . '_nonce';
+		$this->nonce     = $id .'_nonce';
 		$this->taxonomy  = $taxonomy;
-		
+		$this->remove	 = $remove;
+
 		// Add Metabox.
 		add_action( 'add_meta_boxes', array( &$this, 'add' ) );
-		
+
 		// Save Metabox.
 		add_action( 'save_post', array( &$this, 'save' ) );
 
 		// Load scripts.
 		add_action( 'admin_enqueue_scripts', array( &$this, 'scripts' ) );
 	}
-    
+
     /**
 	 * Add the metabox in edit screens.
 	 *
@@ -63,15 +70,17 @@ class Taxonomy_Metabox extends Odin_Metabox {
 				$this->priority
 			);
 		}
-        
-        // Remove the default taxonomy Metabox.
-        if( $this->taxonomy === 'tags' ) {
-            remove_meta_box( 'tagsdiv-'.$this->taxonomy, $this->post_type, 'side' );
-        } else if ( $this->taxonomy === 'category' ) {
-            remove_meta_box( 'categorydiv', $this->post_type, 'side' );
-        } else {
-            remove_meta_box( $this->taxonomy . 'div', $this->post_type, 'side' );
-        }
+
+		//Check if remove parameter is set to true, and then remove the default taxonomy metabox
+		if( isset( $this->remove ) && $this->remove ) {
+			if( $this->taxonomy === 'tags' ) {
+				remove_meta_box( 'tagsdiv-'.$this->taxonomy, $this->post_type, 'side' );
+			} else if ( $this->taxonomy === 'category' ) {
+				remove_meta_box( 'categorydiv', $this->post_type, 'side' );
+			} else {
+				remove_meta_box( $this->taxonomy . 'div', $this->post_type, 'side' );
+			}
+		}
 	}
 
 	/**
@@ -82,8 +91,9 @@ class Taxonomy_Metabox extends Odin_Metabox {
 	 * @return void
 	 */
     public function save( $post_id ) {
-    	// Verify nonce.
-		if ( ! isset( $_POST[ $this->nonce ] ) || ! wp_verify_nonce( $_POST[ $this->nonce ], basename( __FILE__ ) ) ) {
+		// Verify nonce.
+		if ( !isset( $_POST[ $this->nonce ] ) || !wp_verify_nonce( $_POST[ $this->nonce ], $this->get_base_filename() ))
+		{
 			return $post_id;
 		}
 
@@ -100,27 +110,33 @@ class Taxonomy_Metabox extends Odin_Metabox {
 		} elseif ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return $post_id;
 		}
-		
-		if( isset($_POST[ $this->id ]) ) {
-			$terms = array();
-			
-			foreach($_POST[ $this->id ] as $name => $value) {
-				$terms[] = $name;
-			}
 
-			//Add new taxonomy terms
-			wp_set_object_terms( $post_id, $terms, $this->taxonomy );
-			
-		} else {
-			//Remove all taxonomy terms
-			wp_set_object_terms( $post_id, NULL, $this->taxonomy );
+		foreach ( $this->fields as $field ) {
+			$name  = $field['id'];
+			$value = isset( $_POST[ $name ] ) ? $_POST[ $name ] : null;
+
+			if ( ! in_array( $field['type'], array( 'separator', 'title' ) ) ) {
+				//Check if is a multiple(array) field or a single field to make the correct save
+				if( is_array( $_POST[ $name ] ) ){
+					$terms = [];
+					//Loop through all the submitted itens and add it to terms
+					foreach( $_POST[ $name ] as $item ) {
+						$terms[] = $item;
+					}
+
+					//Replace all post terms
+					wp_set_object_terms( $post_id, $terms, $this->taxonomy, false );
+				} else {
+					//Replace all post terms
+					wp_set_object_terms( $post_id, $value, $this->taxonomy, false );
+				}
+			}
 		}
-		
     }
-	
+
 	/**
 	 * Override the Odin_Metabox process_fields().
-	 * 
+	 *
 	 * Uses has_term() to verify the current value for fields. Add the new field choices to switch().
 	 *
 	 * @param  array $args    Field arguments
@@ -133,7 +149,7 @@ class Taxonomy_Metabox extends Odin_Metabox {
 		$type    = $args['type'];
 		$options = isset( $args['options'] ) ? $args['options'] : '';
 		$attrs   = isset( $args['attributes'] ) ? $args['attributes'] : array();
-		
+
 		if( has_term( $id, $this->taxonomy, $post_id ) ){
 			$current = '';
 		} else {
@@ -200,25 +216,25 @@ class Taxonomy_Metabox extends Odin_Metabox {
 	function field_tags_select( $id, $current, $options, $attrs, $post_id ) {
 		// If multiple add a array in the option.
 		$multiple = ( in_array( 'multiple', $attrs ) ) ? '[]' : '';
-	
-		$html = sprintf( '<select id="%1$s" name="%1$s" %2$s %3$s>', $id, $multiple, $this->build_field_attributes( $attrs ) );
-        
+
+		$html = sprintf( '<select id="%1$s" name="%1$s%2$s" %3$s>', $id, $multiple, $this->build_field_attributes( $attrs ) );
+
         if ( !empty( $options ) ) {
-        
+
             foreach ( $options as $key => $label ) {
-                if( has_term( $label , $this->taxonomy, $post_id ) ) {
-                    $selected = 'selected';	
+                if( has_term( $key , $this->taxonomy, $post_id ) ) {
+                    $selected = 'selected';
                 } else {
                     $selected = '';
                 }
 
-                $html .= sprintf( '<option value="%1$s" %4$s >%1$s</option>', $key, selected( $current, $key, false ), $label, $selected );
+                $html .= sprintf( '<option value="%1$s" %4$s >%3$s</option>', $key, selected( $current, $key, false ), $label, $selected );
             }
-        
+
         }
-		
+
 		$html .= '</select>';
-		
+
 		echo $html;
 	}
 
@@ -235,17 +251,16 @@ class Taxonomy_Metabox extends Odin_Metabox {
 	protected function field_tags_checkbox( $id, $current, $options, $attrs, $post_id ) {
 		// If multiple add a array in the option.
 		$multiple = ( in_array( 'multiple', $attrs ) ) ? '[]' : '';
-	
+
 		foreach ( $options as $key => $label ) {
-			if( has_term( $label , $this->taxonomy, $post_id ) ) {
-				$checked = 'checked';	
+			if( has_term( $key , $this->taxonomy, $post_id ) ) {
+				$checked = 'checked';
 			} else {
 				$checked = '';
 			}
-			
-			echo sprintf( '<label><input type="checkbox" id="%4$s" name="%1$s[%5$s]" value="1"%2$s%3$s />%4$s</label><br/>', $id, $checked, $this->build_field_attributes( $attrs ), $key, $label );
+
+			echo sprintf( '<label><input type="checkbox" id="%4$s" name="%1$s[]" value="%4$s" %2$s%3$s />%5$s</label><br/>', $id, $checked, $this->build_field_attributes( $attrs ), $key, $label );
 		}
 	}
 }
-
 ?>
